@@ -4,7 +4,9 @@ Isoline Ring is a Toolcraft studio for topographic torus animations. Open the ap
 
 ## Live studio
 
-The public tuner is deployed on Vercel after this repository is connected. Use **Export Settings** in the panel to take a design with you.
+https://intermission-graphics.vercel.app
+
+Tune presets and sliders there, then use **Export Settings** in the panel to download a JSON design.
 
 ## Local
 
