@@ -8,57 +8,113 @@ export const isolineLookIds = [
 
 export type IsolineLookId = (typeof isolineLookIds)[number];
 
-export type IsolineFontValue = {
+export const isolineBackgroundFills = ["solid", "gradient", "image"] as const;
+
+export type IsolineBackgroundFill = (typeof isolineBackgroundFills)[number];
+
+export const isolineLineModes = ["solid", "dashed", "particles"] as const;
+
+export type IsolineLineMode = (typeof isolineLineModes)[number];
+
+export const isolineCanvasTools = ["strum", "orbit"] as const;
+
+export type IsolineCanvasTool = (typeof isolineCanvasTools)[number];
+
+export type IsolineGradientType =
+  | "linear"
+  | "radial"
+  | "angular"
+  | "diamond";
+
+export type IsolineGradientStop = {
   color: string;
-  fontId: string;
-  fontSize: number;
-  fontWeight: string;
-  letterSpacing:
-    | "tight"
-    | "tighter"
-    | "normal"
-    | "wide"
-    | "wider"
-    | "widest";
-  lineHeight: "loose" | "none" | "normal" | "relaxed" | "snug" | "tight";
   opacity: number;
-  textCase: "capitalize" | "lowercase" | "original" | "titleCase" | "uppercase";
+  position: string;
 };
 
-export type IsolinePress = {
-  active?: boolean;
-  strength: number;
+export type IsolineGradient = {
+  angle: number;
+  gradientType: IsolineGradientType;
+  stops: readonly IsolineGradientStop[];
+};
+
+export type IsolineCurvePoint = {
   x: number;
   y: number;
 };
 
+export type IsolineCurve = {
+  activeChannel: "RGB";
+  points: {
+    RGB: readonly IsolineCurvePoint[];
+  };
+};
+
+export type IsolineOrientationPose = {
+  position: readonly [number, number, number];
+  up: readonly [number, number, number];
+};
+
+export type IsolineImpulse = {
+  amplitude: number;
+  directionX: number;
+  directionY: number;
+  elapsedSeconds: number;
+  x: number;
+  y: number;
+};
+
+export type IsolineBackgroundImage = {
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+  rotationDeg: 0 | 90 | 180 | 270;
+  source: TexImageSource;
+};
+
 export type IsolineSceneValues = {
   background: string;
+  backgroundFill: IsolineBackgroundFill;
+  backgroundGradient: IsolineGradient;
+  bendX: number;
+  bendY: number;
   breathe: boolean;
   bulgeAmount: number;
   bulgeAngle: number;
-  font: IsolineFontValue;
+  canvasTool: IsolineCanvasTool;
+  dashGap: number;
+  dashLength: number;
+  depthZ: number;
+  flow: boolean;
+  gradient: IsolineGradient;
   harmonicCount: number;
   innerRadius: number;
-  lineColor: string;
   lineCount: number;
+  lineMode: IsolineLineMode;
+  lineThickness: readonly [number, number];
   look: IsolineLookId;
-  orbit: boolean;
+  orientation: IsolineOrientationPose;
   outerRadius: number;
+  particleCount: number;
+  particleDamping: number;
+  particleReturn: number;
+  particleScatter: number;
+  particleSize: number;
+  particleSpread: number;
   rotation: number;
   seed: number;
-  showSubtitle: boolean;
-  showTitle: boolean;
   smoothness: number;
   speed: number;
-  strokeWeight: number;
-  subtitle: string;
-  title: string;
+  strumDamping: number;
+  strumRadius: number;
+  strumReturn: number;
+  strumStrength: number;
+  strumWaveSpeed: number;
+  widthProfile: IsolineCurve;
 };
 
 export type IsolineRenderInput = IsolineSceneValues & {
   height: number;
-  press: IsolinePress | null;
+  impulses: readonly IsolineImpulse[];
   progress: number;
   width: number;
 };

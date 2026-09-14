@@ -9,6 +9,9 @@ dist-ssr
 .output
 .next
 *.tsbuildinfo
+ios/IsolinePlayerHarness/IsolinePlayerHarness/Resources/isoline-player.iife.js
+ios/IsolinePlayerHarness/IsolinePlayerHarness/Resources/settings.json
+ios/IsolinePlayerHarness/build
 
 # Test output
 coverage

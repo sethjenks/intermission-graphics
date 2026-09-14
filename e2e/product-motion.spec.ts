@@ -7,33 +7,18 @@ import {
   setIsolineSwitch,
 } from "./product-isoline-helpers";
 
-async function scrubAwayFromStart(page: import("@playwright/test").Page) {
-  const scrubber = page.getByRole("slider", { name: "Playback position" });
-  if (!(await scrubber.isVisible())) {
-    await page
-      .locator('[data-toolcraft-control-target="panels.timeline.extended"]')
-      .getByRole("switch")
-      .click();
-  }
-  await scrubber.press("Home");
-  for (let step = 0; step < 8; step += 1) {
-    await scrubber.press("ArrowRight");
-  }
-}
-
-test("browser: motion.orbit changes product output", async ({ page }) => {
+test("browser: motion.flow changes product output", async ({ page }) => {
   const session = await openIsolineProofSession(page);
-  await scrubAwayFromStart(page);
   let checked = false;
 
   await proveIsolineControlAcrossApplicabilityCases({
     page,
     session,
-    target: "motion.orbit",
+    target: "motion.flow",
     run: async (requirementId) => {
       await expectToolcraftProductObservableToChange(
         session,
-        session.controlAction("motion.orbit", async (field) => {
+        session.controlAction("motion.flow", async (field) => {
           await setIsolineSwitch(field, checked);
           checked = !checked;
         }),
@@ -45,7 +30,6 @@ test("browser: motion.orbit changes product output", async ({ page }) => {
 
 test("browser: motion.breathe changes product output", async ({ page }) => {
   const session = await openIsolineProofSession(page);
-  await scrubAwayFromStart(page);
   let checked = false;
 
   await proveIsolineControlAcrossApplicabilityCases({
@@ -67,7 +51,6 @@ test("browser: motion.breathe changes product output", async ({ page }) => {
 
 test("browser: motion.speed changes product output", async ({ page }) => {
   const session = await openIsolineProofSession(page);
-  await scrubAwayFromStart(page);
   await proveIsolineControlAcrossApplicabilityCases({
     page,
     session,

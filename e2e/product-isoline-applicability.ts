@@ -44,8 +44,17 @@ async function setIsolineApplicabilitySelector(
       }
       await setIsolineSelect(page, field, applicabilityCase.selectorOptionLabel);
       return;
-    case "imagePicker":
     case "segmented":
+      if (!applicabilityCase.selectorOptionLabel) {
+        throw new Error(
+          `Segmented applicability for ${applicabilityCase.selectorTarget} needs an option label.`,
+        );
+      }
+      await field
+        .getByText(applicabilityCase.selectorOptionLabel, { exact: true })
+        .click();
+      return;
+    case "imagePicker":
     case "slider":
     case "tabs":
       throw new Error(

@@ -1,0 +1,14 @@
+.root {
+  height: 100%;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+}
+
+.image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}

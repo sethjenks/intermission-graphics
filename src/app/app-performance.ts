@@ -10,6 +10,9 @@ import {
   ISOLINE_LINE_COUNT_DEFAULT,
   ISOLINE_LINE_COUNT_MAX,
   ISOLINE_LINE_COUNT_MIN,
+  ISOLINE_PARTICLE_COUNT_DEFAULT,
+  ISOLINE_PARTICLE_COUNT_MAX,
+  ISOLINE_PARTICLE_COUNT_MIN,
 } from "./isoline/constants";
 import { isolineRendererPipeline } from "./isoline/pipeline";
 
@@ -22,39 +25,47 @@ const isolinePerformanceModel = {
         kind: "continuous" as const,
         observe: (value: number) => value,
       },
+      "particle-count": {
+        apply: (value: number) => value,
+        dimensionId: "particle-count",
+        kind: "continuous" as const,
+        observe: (value: number) => value,
+      },
     },
   },
   rendererPipeline: isolineRendererPipeline,
-  rendererStrategy: "canvas-2d" as const,
+  rendererStrategy: "webgl" as const,
   rendererTechnique: {
-    exportRenderer: "canvas-2d" as const,
+    exportRenderer: "none" as const,
     fidelityRisks: [
-      "Hairline strokes can alias if backing pixels fall below the selected render scale.",
+      "Cross-GPU antialiasing and floating-point precision can shift line edges slightly.",
+      "Particle density and line continuity can diverge if retained state is not rebuilt after context restoration.",
     ],
     intentionalRasterizationReason:
-      "Preview and image/video export need a single Canvas 2D stroke pass that stays live at high line counts.",
+      "The product is an interactive shader-like spatial field whose thick lines and particles require GPU rasterization.",
     layers: [
       {
-        content: ["geometry", "text"],
-        exportMode: "included" as const,
+        content: ["geometry", "shader"],
+        exportMode: "excluded" as const,
         id: "isoline-ring",
         kind: "product-foreground" as const,
         primitiveCount: "high" as const,
-        renderer: "canvas-2d" as const,
+        renderer: "webgl" as const,
         uiSelector: "[data-toolcraft-product-output]",
       },
     ],
     performanceRisks: [
-      "Line count scales the number of closed stroked paths rebuilt on every live slider and timeline frame.",
+      "Line count scales instanced strip vertices on every rendered frame.",
+      "Particle count scales transform-feedback simulation and point rendering.",
     ],
-    previewRenderer: "canvas-2d" as const,
+    previewRenderer: "webgl" as const,
     productRepresentation: "pixel" as const,
-    rendererStrategy: "canvas-2d" as const,
+    rendererStrategy: "webgl" as const,
     sourceRepresentation: "procedural-data" as const,
     whyNotAlternativeStrategies: [
-      "SVG would keep vectors but becomes costly to patch at 120 live isolines during slider drags.",
-      "WebGL would add a shader pipeline for a 2D stroke that Canvas 2D already draws crisply.",
-      "DOM text cannot represent the closed isoline blend.",
+      "Canvas 2D cannot share a shader runtime with iOS WKWebView or keep particle physics on the GPU.",
+      "SVG becomes costly to patch for dense animated strips and particle scattering.",
+      "WebGPU would exclude the iOS 18 deployment baseline.",
     ],
   },
   usesCustomRenderer: true,
@@ -64,11 +75,22 @@ const isolinePerformanceModel = {
         defaultValue: ISOLINE_LINE_COUNT_DEFAULT,
         id: "line-count",
         interactiveMax: ISOLINE_LINE_COUNT_MAX,
-        batchMax: ISOLINE_LINE_COUNT_MAX,
         mapping: "direct" as const,
         source: {
           kind: "schema-target" as const,
           target: "ring.lineCount",
+          workloadBoundary: "maximum" as const,
+        },
+        unit: "count",
+      },
+      {
+        defaultValue: ISOLINE_PARTICLE_COUNT_DEFAULT,
+        id: "particle-count",
+        interactiveMax: ISOLINE_PARTICLE_COUNT_MAX,
+        mapping: "direct" as const,
+        source: {
+          kind: "schema-target" as const,
+          target: "particles.count",
           workloadBoundary: "maximum" as const,
         },
         unit: "count",
@@ -99,20 +121,12 @@ function scenarioForPath(
     pathId: path.id,
   };
 
-  if (path.interaction === "export") {
-    return {
-      ...base,
-      actionValue: "export.image",
-      completionEvidence: "download",
-      controlLabel: "Export PNG",
-      interaction: "export",
-    };
-  }
-
   if (path.interaction === "control-drag") {
     return {
       ...base,
-      controlLabel: "Lines",
+      controlLabel: path.targets.includes("particles.count")
+        ? "Particles count"
+        : "Lines",
       interaction: "control-drag",
     };
   }
@@ -120,7 +134,7 @@ function scenarioForPath(
   if (path.interaction === "control-change") {
     return {
       ...base,
-      controlLabel: "Orbit",
+      controlLabel: "Flow",
       interaction: "control-change",
     };
   }
@@ -143,6 +157,10 @@ function scenarioForPath(
     };
   }
 
+  if (path.interaction === "export") {
+    throw new Error("The Isoline player has no product artifact export path.");
+  }
+
   return {
     ...base,
     interaction: path.interaction,
@@ -157,7 +175,14 @@ export const appPerformance: ToolcraftEnvelopePerformanceConfig =
   });
 
 export const isolineWorkloadBounds = {
-  defaultValue: ISOLINE_LINE_COUNT_DEFAULT,
-  max: ISOLINE_LINE_COUNT_MAX,
-  min: ISOLINE_LINE_COUNT_MIN,
+  lineCount: {
+    defaultValue: ISOLINE_LINE_COUNT_DEFAULT,
+    max: ISOLINE_LINE_COUNT_MAX,
+    min: ISOLINE_LINE_COUNT_MIN,
+  },
+  particleCount: {
+    defaultValue: ISOLINE_PARTICLE_COUNT_DEFAULT,
+    max: ISOLINE_PARTICLE_COUNT_MAX,
+    min: ISOLINE_PARTICLE_COUNT_MIN,
+  },
 };

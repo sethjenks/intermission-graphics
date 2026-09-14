@@ -1,21 +1,19 @@
 import { defineToolcraft } from "@/toolcraft/runtime";
 
 import { appIdentity } from "./app-identity";
-import { ISOLINE_LOOP_SECONDS, ISOLINE_SCENE_SIZE } from "./isoline/constants";
+import { ISOLINE_SCENE_SIZE } from "./isoline/constants";
 import {
   isolineBackgroundSection,
-  isolineExportActionsSection,
-  isolineImageExportSection,
   isolineInkSection,
+  isolineLineSection,
   isolineLookSection,
   isolineMotionSection,
+  isolinePhysicsSection,
   isolineRingSection,
   isolineSeedSection,
-  isolineShowSection,
-  isolineStyleSection,
+  isolineSpaceSection,
   isolineTempoSection,
-  isolineTypeSection,
-  isolineVideoExportSection,
+  isolineWidthProfileSection,
 } from "./isoline/schema-controls";
 
 export const appSchema = defineToolcraft({
@@ -28,7 +26,7 @@ export const appSchema = defineToolcraft({
       width: ISOLINE_SCENE_SIZE,
     },
     sizing: { mode: "editable-output" },
-    upload: false,
+    upload: true,
   },
   identity: appIdentity,
   panels: {
@@ -38,23 +36,21 @@ export const appSchema = defineToolcraft({
         isolineLookSection,
         isolineSeedSection,
         isolineRingSection,
+        isolineSpaceSection,
+        isolineLineSection,
+        isolineWidthProfileSection,
+        isolinePhysicsSection,
         isolineMotionSection,
         isolineTempoSection,
         isolineInkSection,
-        isolineTypeSection,
-        isolineShowSection,
-        isolineStyleSection,
-        isolineImageExportSection,
-        isolineVideoExportSection,
-        isolineExportActionsSection,
       ],
       title: "Controls",
     },
-    timeline: {
-      defaultDurationSeconds: ISOLINE_LOOP_SECONDS,
-      enabled: true,
-      mode: "playback",
-    },
+  },
+  settingsTransfer: {
+    appId: "intermission-graphics",
+    enabled: "auto",
+    fileName: "isoline-ring-settings",
   },
   toolbar: {
     history: true,

@@ -3,11 +3,16 @@
   "private": true,
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "ai:check": "node scripts/check-toolcraft-code-health.mjs",
     "dev": "node scripts/run-vite-on-free-port.mjs dev",
     "dev:restart": "node scripts/run-vite-on-free-port.mjs dev --toolcraft-restart",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:ios-harness": "npm run build:player && node scripts/prepare-isoline-ios-harness.mjs && xcodebuild -project ios/IsolinePlayerHarness/IsolinePlayerHarness.xcodeproj -target IsolinePlayerHarness -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build",
+    "build:player": "node scripts/build-isoline-player.mjs",
     "preview": "node scripts/run-vite-on-free-port.mjs preview",
     "preview:restart": "node scripts/run-vite-on-free-port.mjs preview --toolcraft-restart",
     "reference:study": "node scripts/create-toolcraft-motion-reference-study.mjs",
@@ -15,6 +20,7 @@
     "test": "node scripts/check-toolcraft-docs.mjs && node scripts/check-toolcraft-integrity.mjs && node --test scripts/*.test.mjs && vitest run src --passWithNoTests --reporter=default --reporter=./scripts/toolcraft-vitest-runtime-evidence-reporter.mjs",
     "test:browser": "playwright install chromium && playwright test --grep-invert \"browser perf:|toolcraft kernel:\"",
     "test:feature": "node scripts/run-feature-verification.mjs",
+    "test:player": "npm run build:player && playwright test e2e/isoline-player.spec.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "verify:delivery": "node scripts/run-delivery-verification.mjs",
     "verify:perf": "node scripts/run-browser-performance.mjs",

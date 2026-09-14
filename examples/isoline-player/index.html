@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Isoline Player</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #f6f3ee;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+      }
+
+      canvas {
+        width: min(88vmin, 900px);
+        height: min(88vmin, 900px);
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="isoline" aria-label="Interactive isoline field"></canvas>
+    <script src="../isoline-player.iife.js"></script>
+    <script src="./start.js" type="module"></script>
+  </body>
+</html>

@@ -1,10 +1,10 @@
 import { deriveToolcraftPerformancePaths } from "@/toolcraft/runtime";
+import type { Page } from "@playwright/test";
 
 import { appPerformance } from "../src/app/app-performance";
 import { appSchema } from "../src/app/app-schema";
 import { getToolcraftControlFieldByTarget } from "./browser-control-target-helpers";
 import { getToolcraftProductObservableSnapshot } from "./product-observable-helpers";
-import { inspectToolcraftImageDownload } from "./image-artifact-inspection";
 import {
   dragToolcraftSliderByTarget,
   dragToolcraftSliderTargetToValue,
@@ -21,7 +21,7 @@ export const appPerformanceCanvasBacking = {
 
 const performancePaths = deriveToolcraftPerformancePaths(appSchema, appPerformance);
 
-function lineCountApplications(page: import("@playwright/test").Page) {
+function lineCountApplications(page: Page) {
   return {
     "line-count": {
       applyValue: async (value: unknown) => {
@@ -37,7 +37,32 @@ function lineCountApplications(page: import("@playwright/test").Page) {
   };
 }
 
-async function prepareIsolinePage(page: import("@playwright/test").Page) {
+function particleCountApplications(page: Page) {
+  return {
+    "particle-count": {
+      applyValue: async (value: unknown) => {
+        const mode = await getToolcraftControlFieldByTarget(page, "line.makeup");
+        await mode.getByText("Particles", { exact: true }).click();
+        await dragToolcraftSliderTargetToValue(
+          page,
+          "particles.count",
+          Number(value),
+        );
+      },
+      observeValue: async () => {
+        const field = await getToolcraftControlFieldByTarget(
+          page,
+          "particles.count",
+        );
+        return Number(
+          await field.getByRole("slider").first().getAttribute("aria-valuenow"),
+        );
+      },
+    },
+  };
+}
+
+async function prepareIsolinePage(page: Page) {
   await page.goto("/");
   await pauseIsolineTimeline(page);
 }
@@ -45,29 +70,22 @@ async function prepareIsolinePage(page: import("@playwright/test").Page) {
 export const appPerformancePathAdapters: readonly ToolcraftPerformancePathAdapter[] =
   performancePaths.map((path) => {
     const needsLineCount = path.workloadDimensions.includes("line-count");
+    const needsParticleCount =
+      path.workloadDimensions.includes("particle-count");
+    const fixtureApplications = (page: Page) => ({
+      ...(needsLineCount ? lineCountApplications(page) : {}),
+      ...(needsParticleCount ? particleCountApplications(page) : {}),
+    });
     const base = {
       pathId: path.id,
       prepare: prepareIsolinePage,
-      ...(needsLineCount
-        ? { fixtureApplications: lineCountApplications }
+      ...(needsLineCount || needsParticleCount
+        ? { fixtureApplications }
         : {}),
     };
 
     if (path.interaction === "export") {
-      return {
-        ...base,
-        output: {
-          kind: "download" as const,
-          label: "Export PNG",
-          verify: async (download, page) => {
-            await inspectToolcraftImageDownload({
-              backgroundRgba: [246, 243, 238, 255],
-              download,
-              page,
-            });
-          },
-        },
-      };
+      throw new Error("The Isoline player has no artifact export path.");
     }
 
     const needsOutcome =
@@ -81,13 +99,27 @@ export const appPerformancePathAdapters: readonly ToolcraftPerformancePathAdapte
       action: async ({ page }) => {
         switch (path.interaction) {
           case "control-drag":
-            await dragToolcraftSliderByTarget(page, "ring.lineCount", 0.8, {
-              pathId: path.id,
-            });
+            if (path.targets.includes("particles.count")) {
+              const mode = await getToolcraftControlFieldByTarget(
+                page,
+                "line.makeup",
+              );
+              await mode.getByText("Particles", { exact: true }).click();
+              await dragToolcraftSliderByTarget(
+                page,
+                "particles.count",
+                0.8,
+                { pathId: path.id },
+              );
+            } else {
+              await dragToolcraftSliderByTarget(page, "ring.lineCount", 0.8, {
+                pathId: path.id,
+              });
+            }
             return;
           case "control-change":
             await page
-              .locator('[data-toolcraft-control-target="motion.orbit"]')
+              .locator('[data-toolcraft-control-target="motion.flow"]')
               .getByRole("switch")
               .click();
             return;
@@ -130,7 +162,7 @@ export const appPerformancePathAdapters: readonly ToolcraftPerformancePathAdapte
       },
       ...(needsOutcome
         ? {
-            observeOutcome: ({ page }: { page: import("@playwright/test").Page }) =>
+            observeOutcome: ({ page }: { page: Page }) =>
               getToolcraftProductObservableSnapshot(page),
           }
         : {}),

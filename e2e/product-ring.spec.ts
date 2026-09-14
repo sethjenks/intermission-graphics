@@ -8,7 +8,6 @@ const sliderTargets = [
   "ring.outerRadius",
   "ring.rotation",
   "ring.lineCount",
-  "ring.strokeWeight",
   "ring.harmonicCount",
   "ring.bulgeAmount",
   "ring.bulgeAngle",

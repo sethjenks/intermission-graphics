@@ -1,8 +1,8 @@
 import type { ToolcraftAppComposition } from "@/toolcraft/runtime/react";
 
 import { appSchema } from "./app-schema";
-import { isolineExportRenderer } from "./isoline/export-renderer";
 import { IsolineCanvas } from "./isoline/isoline-canvas";
+import { IsolineInfiniteBackground } from "./isoline/isoline-infinite-background";
 import { isolineRendererPipeline } from "./isoline/pipeline";
 import { isolineSceneBoundsProvider } from "./isoline/scene-bounds";
 import {
@@ -12,7 +12,7 @@ import {
 
 export const appComposition: ToolcraftAppComposition = {
   canvasContent: <IsolineCanvas />,
-  exportRenderer: isolineExportRenderer,
+  infiniteCanvasContent: <IsolineInfiniteBackground />,
   modelPresentation: { mode: "runtime" },
   onPanelAction: ({ action, dispatch }) => {
     if (action.value !== "randomize-seed") {

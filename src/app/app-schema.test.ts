@@ -6,7 +6,7 @@ import {
 } from "./app-acceptance";
 import { appPerformance } from "./app-performance";
 import { appSchema } from "./app-schema";
-import { ISOLINE_LOOP_SECONDS, ISOLINE_SCENE_SIZE } from "./isoline/constants";
+import { ISOLINE_SCENE_SIZE } from "./isoline/constants";
 
 describe("appSchema", () => {
   it("publishes the isoline Toolcraft product contract", () => {
@@ -14,7 +14,7 @@ describe("appSchema", () => {
     expect(appSchema.canvas.enabled).toBe(true);
     expect(appSchema.canvas.renderScale.enabled).toBe(true);
     expect(appSchema.canvas.sizing).toEqual({ mode: "editable-output" });
-    expect(appSchema.canvas.upload).toBe(false);
+    expect(appSchema.canvas.upload).toBe(true);
     expect(appSchema.canvas.size).toEqual({
       height: ISOLINE_SCENE_SIZE,
       unit: "px",
@@ -22,11 +22,7 @@ describe("appSchema", () => {
     });
     expect(appSchema.panels.controls?.sections[0]?.title).toBe("Setup");
     expect(appSchema.panels.layers).toBeUndefined();
-    expect(appSchema.panels.timeline).toMatchObject({
-      defaultDurationSeconds: ISOLINE_LOOP_SECONDS,
-      enabled: true,
-      mode: "playback",
-    });
+    expect(appSchema.panels.timeline).toBeUndefined();
     expect(appSchema.toolbar).toMatchObject({
       history: true,
       radar: true,
@@ -37,15 +33,14 @@ describe("appSchema", () => {
         "canvas.draggable",
         "canvas.editableSize",
         "canvas.renderScale",
+        "canvas.upload",
         "controls.defaults",
         "controls.panel",
-        "timeline.playback",
         "toolbar.history",
         "toolbar.radar",
         "toolbar.zoom",
       ]),
     );
-    expect(appSchema.assembly.capabilities).not.toContain("canvas.upload");
     expect(appSchema.assembly.capabilities).not.toContain("timeline.keyframes");
     expect(appSchema.assembly.commands).toEqual(
       expect.arrayContaining([
@@ -54,9 +49,9 @@ describe("appSchema", () => {
         "controls.reset",
         "controls.setValue",
         "history.undo",
-        "timeline.setCurrentTime",
       ]),
     );
+    expect(appSchema.assembly.commands).not.toContain("timeline.setCurrentTime");
   });
 
   it("authors isoline product sections after Setup", () => {
@@ -66,28 +61,27 @@ describe("appSchema", () => {
         .map((section) => section.title) ?? [];
 
     expect(productSections).toEqual([
+      "Background",
       "Look",
       "Variation",
       "Ring",
+      "Space",
+      "Line",
+      "Width Profile",
+      "Physics",
       "Motion",
       "Tempo",
       "Ink",
-      "Type",
-      "Show",
-      "Style",
-      "Image Export",
-      "Video Export",
-      "Export",
     ]);
   });
 
-  it("enables playback timeline for orbit and breathe", () => {
-    expect(appSchema.assembly.capabilities).toContain("timeline.playback");
-    expect(appSchema.assembly.commands).toContain("timeline.setCurrentTime");
+  it("uses autonomous continuous motion instead of timeline transport", () => {
+    expect(appSchema.assembly.capabilities).not.toContain("timeline.playback");
     expect(appSchema.assembly.capabilities).not.toContain("timeline.keyframes");
+    expect(appSchema.assembly.commands).not.toContain("timeline.setCurrentTime");
   });
 
-  it("declares line-count workload for the isoline pipeline", () => {
+  it("declares line and particle workload for the isoline pipeline", () => {
     expect(appPerformance.workloadEnvelope.dimensions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -95,6 +89,14 @@ describe("appSchema", () => {
           source: {
             kind: "schema-target",
             target: "ring.lineCount",
+            workloadBoundary: "maximum",
+          },
+        }),
+        expect.objectContaining({
+          id: "particle-count",
+          source: {
+            kind: "schema-target",
+            target: "particles.count",
             workloadBoundary: "maximum",
           },
         }),

@@ -5,7 +5,6 @@ import type {
   ToolcraftTransferMode,
 } from "./acceptance/types";
 import { appSchema } from "./app-schema";
-import { ISOLINE_LOOP_SECONDS } from "./isoline/constants";
 
 const persistenceSlices =
   appSchema.persistence.storage === "localStorage"
@@ -24,7 +23,7 @@ function control(
     browserTestName: `browser: ${target} changes product output`,
     componentType,
     evidence: "product-output",
-    expectedObservable: `${target} changes the rendered isoline ring or captions.`,
+    expectedObservable: `${target} changes the rendered interactive isoline field.`,
     fixture: `${target} isoline fixture`,
     id: target,
     kind: "control",
@@ -36,13 +35,17 @@ function control(
 
 export const appTransferMode: ToolcraftTransferMode = {
   animationIntent: {
-    loopDuration: {
-      evidence:
-        "One forward orbit and one breathe cycle complete in 12 seconds so the first and last frames stitch without reversing.",
-      seconds: ISOLINE_LOOP_SECONDS,
-      source: "product-derived",
-    },
-    mode: "timeline-playback",
+    behaviorCoverage: [
+      "no-user-facing-transport",
+      "no-play-pause",
+      "no-scrub",
+      "no-duration-control",
+      "no-loop-control",
+      "no-export-at-time",
+    ],
+    mode: "autonomous",
+    reason:
+      "Flow and breathe are decorative self-running motion with no start, end, play, pause, scrub, or duration. Video export is removed, so the field does not need Toolcraft timeline transport.",
   },
   mode: "new-toolcraft-app",
   referenceInputs: [],
@@ -50,25 +53,76 @@ export const appTransferMode: ToolcraftTransferMode = {
 
 export const appProductReadiness: ToolcraftProductReadiness = {
   exportIntent: {
-    image: { mode: "toolcraft-default" },
-    svg: { mode: "not-requested" },
-    video: {
+    image: {
       evidence:
-        "Export a square still (1:1, at least 2000px) and a looping video/GIF of the idle motion.",
-      mode: "user-requested",
+        "The user explicitly removed image and video export for this interactive-player project.",
+      mode: "user-removed",
     },
+    svg: { mode: "not-requested" },
+    video: { mode: "not-requested" },
   },
-  interactionOwnership: [],
+  interactionOwnership: [
+    {
+      alternative: {
+        reason:
+          "A panel command cannot preserve continuous spatial contact with the line field.",
+        surface: "panel",
+      },
+      capability: "direct-spatial-edit",
+      evidence: {
+        detail: "The user explicitly requested that people strum the strings.",
+        source: "user-request",
+      },
+      id: "line-strum",
+      reason: "Direct canvas input provides immediate spatial wave feedback.",
+      surface: "canvas",
+      target: "physics.strength",
+    },
+    {
+      alternative: {
+        reason:
+          "Direct manipulation cannot provide a stable exact authored strength value.",
+        surface: "canvas",
+      },
+      capability: "property-edit",
+      evidence: {
+        detail:
+          "The user requested controls for managing the physical line behavior.",
+        source: "user-request",
+      },
+      id: "strum-strength-properties",
+      reason: "The panel exposes a precise persistent strum-strength setting.",
+      selectionScope: { mode: "global" },
+      surface: "panel",
+      target: "physics.strength",
+    },
+    {
+      alternative: {
+        reason:
+          "Panel angle controls would duplicate the direct orbit gesture and orientation gizmo.",
+        surface: "panel",
+      },
+      capability: "direct-spatial-edit",
+      evidence: {
+        detail:
+          "The user selected manual orbit with Toolcraft's orientation gizmo.",
+        source: "user-request",
+      },
+      id: "view-orbit",
+      reason: "Canvas orbit preserves direct spatial inspection of the XYZ form.",
+      surface: "canvas",
+      target: "view.orbit",
+    },
+  ],
   mode: "product",
   productName: "Isoline Ring",
   productSummary:
-    "A procedural topographic torus generator for stills and looping motion.",
+    "An interactive shader-like isoline instrument for web and iOS.",
   requestedBehavior:
-    "Build a hollow isoline ring from blended inner and outer paths, deform it with harmonics, caption it, animate orbit and breathe on the Toolcraft timeline, and export PNG plus video.",
+    "Shape a hollow isoline field in XYZ, flow motion through gradient solid, dashed, or particle lines, strum it with physics, orbit the view, and transfer designs into one reusable web and iOS player.",
   viewInteraction: {
-    mode: "non-spatial",
-    reason:
-      "The product is a flat line drawing with no three-dimensional scene or model.",
+    mode: "orbit",
+    orientationTargets: ["view.orbit"],
   },
 };
 
@@ -78,9 +132,15 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
       entity: "Background field",
       entityId: "background-field",
       groupingReason:
-        "These controls own whether the cream field is included and which color fills it.",
+        "These controls own whether the field is included and which solid, gradient, or image fill it uses.",
       id: "background",
-      targets: ["export.includeBackground", "appearance.background"],
+      targets: [
+        "export.includeBackground",
+        "appearance.backgroundFill",
+        "appearance.background",
+        "appearance.backgroundGradient",
+        "appearance.backgroundImage",
+      ],
       title: "Background",
     },
     {
@@ -110,7 +170,6 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
         "ring.outerRadius",
         "ring.rotation",
         "ring.lineCount",
-        "ring.strokeWeight",
         "ring.harmonicCount",
         "ring.bulgeAmount",
         "ring.bulgeAngle",
@@ -121,15 +180,15 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
     {
       entity: "Motion",
       entityId: "motion",
-      groupingReason: "These switches choose which timeline deformations are live.",
+      groupingReason: "These switches choose which continuous deformations are live.",
       id: "motion",
-      targets: ["motion.orbit", "motion.breathe"],
+      targets: ["motion.flow", "motion.breathe"],
       title: "Motion",
     },
     {
       entity: "Tempo",
       entityId: "tempo",
-      groupingReason: "This control sets how far orbit and breathe travel in one loop.",
+      groupingReason: "This control sets how quickly continuous flow and breathe travel.",
       id: "tempo",
       targets: ["motion.speed"],
       title: "Tempo",
@@ -137,52 +196,63 @@ export const appControlSectionInventory: readonly ToolcraftControlSectionInvento
     {
       entity: "Ink",
       entityId: "ink",
-      groupingReason: "This control colors every isoline stroke.",
+      groupingReason: "This control projects one editable gradient across every line.",
       id: "ink",
-      targets: ["ink.line"],
+      targets: ["ink.gradient"],
       title: "Ink",
     },
     {
-      entity: "Type",
-      entityId: "type",
-      groupingReason: "These controls edit the two caption strings.",
-      id: "type",
-      targets: ["type.title", "type.subtitle"],
-      title: "Type",
-    },
-    {
-      entity: "Show",
-      entityId: "show",
-      groupingReason: "These switches show or hide the two captions.",
-      id: "show",
-      targets: ["type.showTitle", "type.showSubtitle"],
-      title: "Show",
-    },
-    {
-      entity: "Style",
-      entityId: "style",
-      groupingReason: "The shared type block restyles both captions together.",
-      id: "style",
-      targets: ["type.font"],
-      title: "Style",
-    },
-    {
-      entity: "Image export",
-      entityId: "image-export",
+      entity: "Spatial form",
+      entityId: "space",
       groupingReason:
-        "Image format and resolution are one delivery stage for stills.",
-      id: "image-export",
-      targets: ["export.image.format", "export.image.resolution"],
-      title: "Image Export",
+        "These controls deform and orient the line field in three-dimensional space.",
+      id: "space",
+      targets: ["space.bendX", "space.bendY", "space.depthZ", "view.orbit"],
+      title: "Space",
     },
     {
-      entity: "Video export",
-      entityId: "video-export",
+      entity: "Line construction",
+      entityId: "line",
       groupingReason:
-        "Video format and resolution are one delivery stage for motion.",
-      id: "video-export",
-      targets: ["export.video.format", "export.video.resolution"],
-      title: "Video Export",
+        "These controls choose line makeup and shape the radial width profile.",
+      id: "line",
+      targets: [
+        "line.makeup",
+        "line.thickness",
+        "line.dashLength",
+        "line.dashGap",
+        "particles.count",
+        "particles.size",
+        "particles.spread",
+        "particles.scatter",
+        "particles.return",
+        "particles.damping",
+      ],
+      title: "Line",
+    },
+    {
+      entity: "Line width response",
+      entityId: "width-profile",
+      groupingReason:
+        "This curve maps the inner-to-outer radial position to strip width.",
+      id: "width-profile",
+      targets: ["line.widthProfile"],
+      title: "Width Profile",
+    },
+    {
+      entity: "Strum physics",
+      entityId: "physics",
+      groupingReason:
+        "These controls tune the spatial wave produced by direct strumming.",
+      id: "physics",
+      targets: [
+        "physics.strength",
+        "physics.radius",
+        "physics.waveSpeed",
+        "physics.damping",
+        "physics.return",
+      ],
+      title: "Physics",
     },
   ];
 
@@ -209,49 +279,19 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   },
   {
     automated: true,
-    automatedTestName: "timeline playback controls drive rendered output",
-    browser: true,
-    browserTestName: "browser: timeline playback controls drive rendered output",
-    componentType: "timeline",
-    evidence: "timeline-output",
-    expectedObservable:
-      "Pause, scrub, duration, and a forward seamless loop change the isoline phase through runtime timeline progress.",
-    fixture: "isoline timeline playback",
-    id: "timeline.playback",
-    kind: "runtime",
-    target: "timeline.playback",
-    timelineCoverage: "playback",
-    timelineLoopProof: {
-      direction: "forward-only",
-      durationChange: "reproved-after-edit",
-      reversePlayback: "forbidden",
-      seam: "first-last-match",
-    },
-    timelinePlaybackCoverage: [
-      "pause-resume",
-      "scrub",
-      "duration",
-      "loop",
-      "rendered-frame",
-    ],
-    userAction:
-      "Pause, scrub, edit duration, and confirm first and last frames stitch without reverse motion.",
-  },
-  {
-    automated: true,
     automatedTestName: "canvas.renderScale preserves selected backing pixels",
     browser: true,
     browserTestName: "browser: canvas.renderScale preserves selected backing pixels",
     componentType: "slider",
     evidence: "product-output",
     expectedObservable:
-      "Resolution scale changes backing pixels without changing CSS size during interaction, playback, and steady state.",
+      "Resolution scale changes backing pixels without changing CSS size during interaction and steady state.",
     fixture: "isoline render scale",
     id: "canvas.renderScale",
     kind: "runtime",
     renderScaleCoverage: {
       kind: "selected-backing-pixels",
-      states: ["interaction", "playback", "steady"],
+      states: ["interaction", "steady"],
     },
     target: "canvas.renderScale",
     userAction: "Change Resolution scale and inspect canvas backing pixels.",
@@ -272,49 +312,61 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
     target: "canvas.infinity",
     userAction: "Enable Infinity canvas, then disable it.",
   },
-  {
-    automated: true,
-    automatedTestName: "infinity canvas crops image export to scene bounds",
-    browser: true,
-    browserTestName: "browser: infinity canvas crops image export to scene bounds",
-    componentType: "panelActions",
-    evidence: "exported-bytes",
-    expectedObservable:
-      "Infinite PNG export crops to the isoline scene bounds provider union.",
-    fixture: "isoline infinity image export",
-    id: "canvas.infinity.image-export",
-    infinityCanvasCoverage: "scene-bounds-image-export",
-    kind: "runtime",
-    target: "actions.output",
-    userAction: "Enable Infinity canvas and export PNG.",
-  },
-  {
-    automated: true,
-    automatedTestName: "infinity canvas keeps one video export envelope",
-    browser: true,
-    browserTestName: "browser: infinity canvas keeps one video export envelope",
-    componentType: "panelActions",
-    evidence: "exported-bytes",
-    expectedObservable:
-      "Infinite video export uses one scene-bounds envelope for every scheduled frame.",
-    fixture: "isoline infinity video export",
-    id: "canvas.infinity.video-export",
-    infinityCanvasCoverage: "scene-bounds-video-export",
-    kind: "runtime",
-    target: "actions.output",
-    userAction: "Enable Infinity canvas and export video.",
-  },
   control("export.includeBackground", "switch", {
-    backgroundOutputCoverage: "all-required-background-output",
+    backgroundOutputCoverage: [
+      "infinity-viewport-color-and-dependency",
+      "preview-hidden-when-excluded",
+    ],
     evidence: "product-output",
     expectedObservable:
-      "Turning Background off hides the preview field, makes PNG transparent, keeps Infinity dependent on Background, and preserves video background.",
+      "Turning Background off hides the preview field and keeps Infinity dependent on Background.",
   }),
   control("appearance.background", "color", {
-    evidence: "exported-bytes",
+    evidence: "product-output",
     expectedObservable:
-      "Video frames pick up the paper color, including when preview fill is hidden.",
+      "The bounded preview and Infinity viewport use the selected field color.",
   }),
+  control("appearance.backgroundFill", "segmented", {
+    expectedObservable:
+      "Type chooses a solid color, gradient, or image as the only field fill.",
+    optionCoverage: "each-visible-item",
+  }),
+  control("appearance.backgroundGradient", "gradient", {
+    controlPartCoverage: [
+      "gradient.angle",
+      "gradient.gradientType",
+      "gradient.stops.color",
+      "gradient.stops.opacity",
+      "gradient.stops.position",
+    ],
+    expectedObservable:
+      "The field fill follows the same gradient type, angle, and stops as Ink.",
+  }),
+  {
+    automated: true,
+    automatedTestName: "appearance.backgroundImage upload lifecycle updates the field",
+    browser: true,
+    browserTestName:
+      "browser: appearance.backgroundImage upload lifecycle updates the field",
+    componentType: "fileDrop",
+    evidence: "media-lifecycle",
+    expectedObservable:
+      "Uploading a background image covers the field; rotate and flip change that cover; Clear and Reset remove it.",
+    fixture: "isoline background image",
+    id: "appearance.backgroundImage",
+    kind: "control",
+    mediaLifecycleCoverage: [
+      "upload",
+      "remove",
+      "reset",
+      "rotate",
+      "flip",
+      "transform-output",
+    ],
+    target: "appearance.backgroundImage",
+    userAction:
+      "Upload a background image, rotate 90°, flip horizontal, clear it, then Reset the Background section.",
+  },
   control("look.preset", "select", {
     optionCoverage: "each-visible-item",
   }),
@@ -326,69 +378,94 @@ export const appAcceptance: readonly ToolcraftComponentAcceptance[] = [
   control("ring.outerRadius", "slider"),
   control("ring.rotation", "slider"),
   control("ring.lineCount", "slider"),
-  control("ring.strokeWeight", "slider"),
   control("ring.harmonicCount", "slider"),
   control("ring.bulgeAmount", "slider"),
   control("ring.bulgeAngle", "slider"),
   control("ring.smoothness", "slider"),
-  control("motion.orbit", "switch"),
+  control("space.bendX", "slider"),
+  control("space.bendY", "slider"),
+  control("space.depthZ", "slider"),
+  {
+    automated: true,
+    automatedTestName: "view.orbit changes rendered spatial pose",
+    browser: true,
+    browserTestName:
+      "browser: orientation gizmo and Orbit tool share the rendered pose",
+    canvasHandle: {
+      exportCleanTestName: "web and iOS players exclude editor orientation chrome",
+      outputObservable: "The isoline field follows the shared orbit pose.",
+      testId: "toolcraft-orientation-gizmo",
+      writesTarget: "view.orbit",
+    },
+    componentType: "orientationGizmo",
+    evidence: "product-output",
+    expectedObservable:
+      "Gizmo axis, gizmo drag, and a drag that starts outside the ring rotate the isoline field without strumming.",
+    fixture: "spatial isoline field",
+    id: "view.orbit",
+    interactionId: "view-orbit",
+    kind: "canvas-handle",
+    orientationGizmoCoverage: "all-required-orientation-gizmo-behavior",
+    target: "view.orbit",
+    userAction:
+      "Drag the orientation gizmo, or press outside the ring and drag to orbit.",
+  },
+  control("motion.flow", "switch"),
   control("motion.breathe", "switch"),
   control("motion.speed", "slider"),
-  control("ink.line", "color"),
-  control("type.title", "text"),
-  control("type.showTitle", "switch"),
-  control("type.subtitle", "text"),
-  control("type.showSubtitle", "switch"),
-  control("type.font", "fontPicker", {
+  control("ink.gradient", "gradient", {
     controlPartCoverage: [
-      "fontPicker.fontId",
-      "fontPicker.fontWeight",
-      "fontPicker.fontSize",
-      "fontPicker.letterSpacing",
-      "fontPicker.lineHeight",
-      "fontPicker.textCase",
-      "fontPicker.color",
-      "fontPicker.opacity",
+      "gradient.angle",
+      "gradient.gradientType",
+      "gradient.stops.color",
+      "gradient.stops.opacity",
+      "gradient.stops.position",
     ],
   }),
-  control("export.image.format", "select", {
-    evidence: "exported-bytes",
-    expectedObservable: "PNG and JPG stills decode as different image types.",
+  control("line.makeup", "segmented", {
     optionCoverage: "each-visible-item",
   }),
-  control("export.image.resolution", "select", {
-    evidence: "exported-bytes",
-    expectedObservable: "2K, 4K, and 8K stills decode at different pixel sizes.",
-    optionCoverage: "each-visible-item",
+  control("line.thickness", "rangeSlider", {
+    controlPartCoverage: ["rangeSlider.lower", "rangeSlider.upper"],
   }),
-  control("export.video.format", "select", {
-    evidence: "exported-bytes",
-    expectedObservable: "MP4 and WebM loops decode as different containers.",
-    optionCoverage: "each-visible-item",
+  control("line.widthProfile", "curves", {
+    controlPartCoverage: ["curves.points"],
   }),
-  control("export.video.resolution", "select", {
-    evidence: "exported-bytes",
-    expectedObservable: "Current and 4K loops decode at different frame sizes.",
-    optionCoverage: "each-visible-item",
+  control("line.dashLength", "slider"),
+  control("line.dashGap", "slider"),
+  control("particles.count", "slider"),
+  control("particles.size", "slider"),
+  control("particles.spread", "slider"),
+  control("particles.scatter", "slider"),
+  control("particles.return", "slider"),
+  control("particles.damping", "slider"),
+  control("physics.strength", "slider", {
+    interactionId: "strum-strength-properties",
   }),
+  control("physics.radius", "slider"),
+  control("physics.waveSpeed", "slider"),
+  control("physics.damping", "slider"),
+  control("physics.return", "slider"),
   {
-    actionCoverage: ["export.image", "export.video"],
     automated: true,
-    automatedTestName: "actions.output exports isoline artifacts",
+    automatedTestName: "canvas strum creates and settles a spatial wave",
     browser: true,
-    browserTestName: "browser: actions.output exports isoline artifacts",
-    componentType: "panelActions",
-    evidence: "exported-bytes",
+    browserTestName: "browser: Strum tool deforms the line field and settles",
+    canvasHandle: {
+      exportCleanTestName: "settings transfer excludes ephemeral strum impulses",
+      outputObservable: "The line field deforms around the pointer path.",
+      testId: "isoline-strum-surface",
+      writesTarget: "physics.strength",
+    },
+    componentType: "canvasInteraction",
+    evidence: "product-output",
     expectedObservable:
-      "Export PNG and Export Video download isoline artifacts that consume format, resolution, background, and timeline progress.",
-    exportArtifactCoverage: [
-      "all-required-image-export-behavior",
-      "all-required-video-export-behavior",
-    ],
-    fixture: "isoline export fixture",
-    id: "actions.output",
-    kind: "control",
-    target: "actions.output",
-    userAction: "Click Export PNG and Export Video.",
+      "Dragging on the ring creates a bounded wave that decays back to rest.",
+    fixture: "interactive isoline field",
+    id: "interaction.strum",
+    interactionId: "line-strum",
+    kind: "canvas-handle",
+    target: "physics.strength",
+    userAction: "Press the visible ring and drag across it.",
   },
 ];

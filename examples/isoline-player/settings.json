@@ -1,0 +1,32 @@
+{
+  "appId": "intermission-graphics",
+  "canvas": {
+    "mode": "finite",
+    "size": {
+      "height": 2048,
+      "width": 2048
+    }
+  },
+  "exportedAt": "2026-09-11T00:00:00.000Z",
+  "source": "toolcraft-settings",
+  "timeline": {
+    "currentTimeSeconds": 0,
+    "durationSeconds": 12,
+    "expanded": false,
+    "isLooping": true,
+    "isPlaying": false
+  },
+  "values": {
+    "export.includeBackground": true,
+    "appearance.background": "#F6F3EE",
+    "interaction.canvasTool": "strum",
+    "line.makeup": "solid",
+    "motion.flow": true,
+    "motion.breathe": true,
+    "view.orbit": {
+      "position": [0, 0.2, 1.75],
+      "up": [0, 1, 0]
+    }
+  },
+  "version": 2
+}
